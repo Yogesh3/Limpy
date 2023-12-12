@@ -16,6 +16,7 @@ from scipy.interpolate import RectBivariateSpline
 
 import limpy.params as p
 import limpy.utils as lu
+import limpy.cib as cib
 
 pl.rcParams["xtick.labelsize"] = "10"
 pl.rcParams["ytick.labelsize"] = "10"
@@ -1698,6 +1699,8 @@ def mhalo_to_lline(
     line_name="CII158",
     model_name="Silva15-m1",
     sfr_model="Behroozi19",
+    cib_param_dataset='Planck13',
+    cib_freq= '150',
     use_scatter=False,
     params_fisher=None,
     f_duty=0.1,
@@ -1732,6 +1735,36 @@ def mhalo_to_lline(
             model_name=model_name,
             f_duty=f_duty,
         )
+
+
+    elif line_name.lower() == 'cib':
+        if model_name.lower() != 'shang':
+            raise NotImplementedError("Only have the Shang et al. model implemented")
+
+        cib_params = {}
+        if cib_param_dataset.lower() == 'planck13':        # Planck 2013
+            cib_params['alpha'] = 0.36
+            cib_params['beta'] = 1.75
+            cib_params['gamma'] = 1.7
+            cib_params['delta'] = 3.6
+            cib_params['Td_o'] = 24.4
+            cib_params['logM_eff'] = 12.6
+            cib_params['var'] = 0.5
+            cib_params['L_o'] = 6.4e-8
+        elif cib_param_dataset.lower() == 'viero':      # Viero et al
+            cib_params['alpha'] = 0.2
+            cib_params['beta'] = 1.6
+            cib_params['gamma'] = 1.7      # not in Viero, so using Planck13
+            cib_params['delta'] = 2.4
+            cib_params['Td_o'] = 20.7
+            cib_params['logM_eff'] = 12.3
+            cib_params['var'] = 0.3
+            cib_params['L_o'] = 6.4e-8
+
+        L_line = cib.luminosity(
+            z, Mhalo, 0, cib_freq, cib_params 
+        )
+        
 
     else:
          L_line = L_line_Visbal10(Mhalo, z,
