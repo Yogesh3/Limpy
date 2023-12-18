@@ -3,7 +3,7 @@ import numpy as np
 # from matplotlib import colors as c
 
 import astropy.constants as const
-from astropy import units as u
+# from astropy import units as u
 from scipy.optimize import fsolve
 
 def blackbody(v, T):
@@ -16,7 +16,6 @@ def blackbody(v, T):
 
 def boltzmann(x, T):
     # Defining physical constants
-    c = const.c.cgs.value
     h = const.h.cgs.value
     k_B = const.k_B.cgs.value
     
@@ -231,8 +230,8 @@ def capitalSigma(M, logM_eff, sigma2):
     """Halo mass dependance of galaxy luminosity 
     
     Data Dictionary
-    logM_eff : log10(mass peak of specific IR emissivity) in solar masses
-    sigma2   : (standard deviation)^2 of the Gaussian
+        logM_eff : log10(mass peak of specific IR emissivity) in solar masses
+        sigma2   : (standard deviation)^2 of the Gaussian
     """
 
     return M/np.sqrt(2*np.pi*sigma2) * np.exp(- (np.log10(M)-logM_eff)**2 / (2*sigma2))

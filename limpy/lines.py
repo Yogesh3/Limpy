@@ -1696,11 +1696,13 @@ def mhalo_to_Oxygen_fit(
 def mhalo_to_lline(
     Mhalo,
     z,
+    dz= None,
     line_name="CII158",
     model_name="Silva15-m1",
     sfr_model="Behroozi19",
     cib_param_dataset='Planck13',
-    cib_freq= '150',
+    freq_obs= '150',
+    dfreq_obs= None,
     use_scatter=False,
     params_fisher=None,
     f_duty=0.1,
@@ -1741,6 +1743,7 @@ def mhalo_to_lline(
         if model_name.lower() != 'shang':
             raise NotImplementedError("Only have the Shang et al. model implemented")
 
+        #Add Parameters
         cib_params = {}
         if cib_param_dataset.lower() == 'planck13':        # Planck 2013
             cib_params['alpha'] = 0.36
@@ -1761,10 +1764,24 @@ def mhalo_to_lline(
             cib_params['var'] = 0.3
             cib_params['L_o'] = 6.4e-8
 
-        L_line = cib.luminosity(
-            z, Mhalo, 0, cib_freq, cib_params 
-        )
-        
+        #Get Ranges
+        if (dz is None and dfreq_obs is not None) or (dz is not None and dfreq_obs is None):
+            raise ValueError("Need both 'dz' and 'dfreq_obs'")
+        elif dz is not None and dfreq_obs is not None:
+            bandpass = [freq_obs-dfreq_obs, freq_obs+freq_obs]
+            zs = np.linspace(z-dz, z+dz)
+        else:
+            bandpass = [freq_obs]
+
+        #Get Luminosity
+        L_cib = cib.luminosity(
+            zs, 
+            Mhalo,
+            0, 
+            bandpass, 
+            cib_params 
+        )[..., 0]
+        L_line = np.trapz(L_cib, axis=0)
 
     else:
          L_line = L_line_Visbal10(Mhalo, z,
@@ -2286,11 +2303,14 @@ def make_quantity_grid(
 def make_quantity_rectangular_grid(
     halocat_file,
     halo_redshift,
+    dz= None,
     sfr_model="Behroozi19",
     model_name="Silva15-m1",
     quantity="intensity",
     line_name="CII158",
     halo_cutoff_mass=1e11,
+    freq_obs= '150',
+    dfreq_obs= None,
     nproj=None,
     use_scatter=False,
     halocat_type="input_cat",
@@ -2322,10 +2342,13 @@ def make_quantity_rectangular_grid(
     lum_line = mhalo_to_lline(
         halomass,
         halo_redshift,
+        dz= dz,
         sfr_model=sfr_model,
         model_name=model_name,
         use_scatter=use_scatter,
         line_name=line_name,
+        freq_obs= freq_obs,
+        dfreq_obs= dfreq_obs,
         params_fisher=params_fisher,
         zg = zg
     )
@@ -2404,15 +2427,19 @@ def make_quantity_rectangular_grid_NO_Z_EVO(
     if (dnu_obs is None):
         Ngrid_new = ngrid_z
         d_ngrid = ngrid_z
+        dz = None
 
 
     Igcal = make_quantity_rectangular_grid(
                 halocat_file,
                 halo_redshift,
+                dz= dz,
                 sfr_model= sfr_model,
                 model_name= model_name,
                 quantity="intensity",
                 line_name=line_name,
+                freq_obs = nu_obs,
+                dfreq_obs = dnu_obs,
                 halo_cutoff_mass= halo_cutoff_mass,
                 use_scatter= use_scatter,
                 halocat_type= halocat_type,
@@ -2466,6 +2493,7 @@ def make_quantity_rectangular_grid_z_evo(
     if (dnu_obs is None):
         Ngrid_new = ngrid_z
         d_ngrid = ngrid_z
+        dz = None
 
 
 
@@ -2512,8 +2540,11 @@ def make_quantity_rectangular_grid_z_evo(
         lum_line = mhalo_to_lline(
                     halomass_mask,
                     z_start,
+                    dz = dz,
                     sfr_model=sfr_model,
                     model_name=model_name,
+                    freq_obs= nu_obs,
+                    dfreq_obs= dnu_obs,
                     use_scatter=use_scatter,
                     line_name=line_name,
                     params_fisher=params_fisher,
