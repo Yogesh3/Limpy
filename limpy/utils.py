@@ -371,12 +371,17 @@ def nu_obs_to_z(nu_obs, line_name="CII158"):
     return z
 
 
-def comoving_size_to_delta_nu(length, z, line_name="CII158"):
-    nu_rest_line = p.nu_rest(line_name=line_name)
+def comoving_size_to_delta_nu(length, z, line_name="CII158", nu_obs= None):
+    if line_name.lower() == 'cib':
+        if nu_obs is None:
+            raise ValueError("If you want CIB, must give observed frequency")
+        nu_rest = nu_obs * (1 + z)
+    else:
+        nu_rest = p.nu_rest(line_name=line_name)
 
     dchi_dz = p.c_in_mpc / p.cosmo.H_z(z)
 
-    dnu = (length) * nu_rest_line / (dchi_dz * (1 + z) ** 2)
+    dnu = (length) * nu_rest / (dchi_dz * (1 + z) ** 2)
 
     return dnu
 
@@ -412,7 +417,10 @@ def box_freq_to_quantities(
     nu_obs=280, dnu_obs=2.8, boxsize=80, ngrid=512, z_start=None, line_name="CII158"
 ):
 
-    nu_rest = p.nu_rest(line_name=line_name)
+    if line_name.lower() == 'cib':
+        nu_rest = nu_obs * (1 + z_start)
+    else:
+        nu_rest = p.nu_rest(line_name=line_name)
 
     cell_size = boxsize / ngrid
 
