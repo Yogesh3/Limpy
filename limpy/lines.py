@@ -1774,14 +1774,17 @@ def mhalo_to_lline(
             bandpass = [freq_obs]
 
         #Get Luminosity
-        L_cib = cib.luminosity(
-            zs, 
-            Mhalo,
-            0, 
-            bandpass, 
-            cib_params 
-        )[..., 0]
-        L_line = np.trapz(L_cib, axis=0)
+        L_cib_grid = cib.luminosity(
+                                    zs, 
+                                    Mhalo,
+                                    0, 
+                                    bandpass, 
+                                    cib_params 
+                                   )[...,0]
+        L_line = np.diag(L_cib_grid)
+        #Debugging
+        # L_line = np.empty(L_line.shape)
+        # L_line[:] = np.nan
 
     else:
          L_line = L_line_Visbal10(Mhalo, z,
@@ -2488,6 +2491,7 @@ def make_quantity_rectangular_grid_z_evo(
 
         Ngrid_new = int(ngrid_z/d_ngrid) if d_ngrid < ngrid_z else 1
         d_ngrid = d_ngrid if d_ngrid< ngrid_z else ngrid_z
+        print(f'Redshift bin sizes: {dz}')
 
     # if dnu_obs is None, then ngrid along z axis will remain unchanged.
     if (dnu_obs is None):
