@@ -1777,7 +1777,7 @@ def mhalo_to_lline(
         L_cib_grid = cib.luminosity(
                                     zs, 
                                     Mhalo,
-                                    0, 
+                                    1, 
                                     bandpass, 
                                     cib_params 
                                    )[...,0]
@@ -2313,7 +2313,6 @@ def make_quantity_rectangular_grid(
     line_name="CII158",
     halo_cutoff_mass=1e11,
     freq_obs= '150',
-    dfreq_obs= None,
     nproj=None,
     use_scatter=False,
     halocat_type="input_cat",
@@ -2336,7 +2335,7 @@ def make_quantity_rectangular_grid(
     if cellsize_y:
         d_omega_pix = lu.solid_angle(cellsize_y, halo_redshift)
 
-    d_nu = lu.comoving_size_to_delta_nu(cellsize_z, halo_redshift, line_name=line_name)
+    d_nu = lu.comoving_size_to_delta_nu(cellsize_z, halo_redshift, line_name=line_name, nu_obs= freq_obs)
 
     halomass, halo_cm = lu.make_halocat(
         halocat_file, mmin=halo_cutoff_mass, halocat_type=halocat_type
@@ -2351,7 +2350,7 @@ def make_quantity_rectangular_grid(
         use_scatter=use_scatter,
         line_name=line_name,
         freq_obs= freq_obs,
-        dfreq_obs= dfreq_obs,
+        dfreq_obs= d_nu,
         params_fisher=params_fisher,
         zg = zg
     )
@@ -2442,7 +2441,6 @@ def make_quantity_rectangular_grid_NO_Z_EVO(
                 quantity="intensity",
                 line_name=line_name,
                 freq_obs = nu_obs,
-                dfreq_obs = dnu_obs,
                 halo_cutoff_mass= halo_cutoff_mass,
                 use_scatter= use_scatter,
                 halocat_type= halocat_type,
@@ -2523,7 +2521,7 @@ def make_quantity_rectangular_grid_z_evo(
         if cellsize_y:
             d_omega_pix = lu.solid_angle(cellsize_y, z_start)
 
-        d_nu = lu.comoving_size_to_delta_nu(cellsize_z, z_start, line_name=line_name)
+        dnu_obs = lu.comoving_size_to_delta_nu(cellsize_z, z_start, line_name=line_name, nu_obs= nu_obs)
 
 
         #print(i)
@@ -2570,7 +2568,7 @@ def make_quantity_rectangular_grid_z_evo(
         prefac = 4.0204e-2 * small_h**2  # Lsol/Mpc^2/ GHz
 
         grid_intensity_cal = (
-            prefac * (grid_lum / 4.0 / np.pi / D_lum**2) / d_omega_pix / d_nu
+            prefac * (grid_lum / 4.0 / np.pi / D_lum**2) / d_omega_pix / dnu_obs
         )  # Jy/sr
 
         #print("The shape of", np.shape( grid_intensity_cal))
@@ -2945,6 +2943,8 @@ def plot_beam_convolution(
 
     plt.tight_layout()
     plt.savefig("luminsoty_beam.png")
+
+    return fig, ax
 
 
 def plot_slice_zoomin(
