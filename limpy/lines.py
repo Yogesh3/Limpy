@@ -1768,20 +1768,23 @@ def mhalo_to_lline(
         if (dz is None and dfreq_obs is not None) or (dz is not None and dfreq_obs is None):
             raise ValueError("Need both 'dz' and 'dfreq_obs'")
         elif dz is not None and dfreq_obs is not None:
-            bandpass = [freq_obs-dfreq_obs, freq_obs+freq_obs]
-            zs = np.linspace(z-dz, z+dz)
+            bandpass = [freq_obs-dfreq_obs, freq_obs+dfreq_obs]
+            print(bandpass)
+            # zs = np.linspace(z-dz, z+dz)
+            zs = np.ones(len(Mhalo)) * z
         else:
             bandpass = [freq_obs]
 
         #Get Luminosity
-        L_cib_grid = cib.luminosity(
-                                    zs, 
-                                    Mhalo,
-                                    1, 
-                                    bandpass, 
-                                    cib_params 
-                                   )[...,0]
-        L_line = np.diag(L_cib_grid)
+        L_line = cib.luminosity(
+                                zs, 
+                                Mhalo,
+                                1, 
+                                bandpass, 
+                                cib_params,
+                                halocat= True
+                                )
+
         #Debugging
         # L_line = np.empty(L_line.shape)
         # L_line[:] = np.nan

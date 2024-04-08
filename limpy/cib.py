@@ -236,8 +236,8 @@ def capitalSigma(M, logM_eff, sigma2):
 
     return M/np.sqrt(2*np.pi*sigma2) * np.exp(- (np.log10(M)-logM_eff)**2 / (2*sigma2))
 
-def luminosity(z, M, Nks, nu, params, nuframe='obs'):  
-    """Luminosity of CIB galaxies. It depends only on mass and redshift, but is broadcasted onto a grid of [z, M, k/r]. The fit parameters are in the "params" dictionary.
+def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True):  
+    """Luminosity of CIB galaxies. It depends only on mass and redshift. The fit parameters are in the "params" dictionary. The luminosity is either broadcasted onto a grid of [z, M, k/r] or is returned soley for the redshifts and masses provided (the diagonal of the [z, M] grid).
 
     Arguments:
         M [1darray]: galaxy's masses
@@ -245,6 +245,7 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs'):
         Nks [int]: number of k's
         nu [1darray]: either single frequency or the endpoints of a bandpass
         nuframe [str:'obs'|'rest']: frame that the nu is given in
+        halocat [bool]: If True, returns the luminosity for each redshift-halo mass pair provided (so len(z) = len(M)). If False, returns the lumnosity on the full 3D grid. 
     
     Model parameters:
         alpha [float]: fit parameter - alpha 
@@ -258,6 +259,8 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs'):
 
     Returns:
         [3darray, float] : luminosity[z, M, k/r]
+        --- or ---
+        [1darray, float] : luminosity as a function of a series of (z, M) pairs
     """     
     #Unpack Parameters
     a = params['alpha']
@@ -274,9 +277,16 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs'):
     Lm = capitalSigma(M, logM_eff, var)
     
     #Put Luminosity on Grid
-    Lk = np.ones(Nks)
-    Lzz, Lmm, _ = np.meshgrid(Lz,Lm,Lk, indexing='ij')
-    L = Lzz * Lmm
+    if not halocat:
+        Lk = np.ones(Nks)
+        Lzz, Lmm, _ = np.meshgrid(Lz,Lm,Lk, indexing='ij')
+        L = Lzz * Lmm
+
+    #Calculate Luminosities for a Halo Catalogue
+    elif halocat:
+        assert len(z) == len(M), f"There are {len(z)} redshifts but only {len(M)} masses! Since you've indicated that this is a halo catalogue, you must have an unambiguous number of halos."
+
+        L = Lz * Lm
 
     return L_o * L
 
