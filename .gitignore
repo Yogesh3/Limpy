@@ -7,3 +7,4 @@ dist
 *.txt
 examples/*.ipynb_checkpoints
 examples/markdown.ipynb
+*checkpoint*
