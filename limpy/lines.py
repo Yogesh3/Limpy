@@ -1753,7 +1753,7 @@ def mhalo_to_lline(
             cib_params['Td_o'] = 24.4
             cib_params['logM_eff'] = 12.6
             cib_params['var'] = 0.5
-            cib_params['L_o'] = 6.4e-8
+            cib_params['L_o'] = 6.4e-8      # Jy * Mpc^2 / M_sun / Hz
         elif cib_param_dataset.lower() == 'viero':      # Viero et al
             cib_params['alpha'] = 0.2
             cib_params['beta'] = 1.6
@@ -1764,18 +1764,16 @@ def mhalo_to_lline(
             cib_params['var'] = 0.3
             cib_params['L_o'] = 6.4e-8
 
-        #Get Ranges
-        if (dz is None and dfreq_obs is not None) or (dz is not None and dfreq_obs is None):
-            raise ValueError("Need both 'dz' and 'dfreq_obs'")
-        elif dz is not None and dfreq_obs is not None:
+        #Get Bandpass
+        if dfreq_obs is not None:
             bandpass = [freq_obs-dfreq_obs, freq_obs+dfreq_obs]
-            print(bandpass)
+            print(f'Observing bandpass from { bandpass[0] } to { bandpass[1] } GHz')
             # zs = np.linspace(z-dz, z+dz)
-            zs = np.ones(len(Mhalo)) * z
         else:
             bandpass = [freq_obs]
 
         #Get Luminosity
+        zs = np.ones(len(Mhalo)) * z
         L_line = cib.luminosity(
                                 zs, 
                                 Mhalo,
@@ -2262,7 +2260,8 @@ def make_quantity_grid(
     # nu_line=p.nu_rest(line_name=line_name)*p.Ghz_to_hz
     d_omega_pix = lu.solid_angle(cellsize, halo_redshift)
 
-    d_nu = lu.comoving_size_to_delta_nu(cellsize, halo_redshift, line_name=line_name)
+    if line_name.lower() != 'cib':
+        d_nu = lu.comoving_size_to_delta_nu(cellsize, halo_redshift, line_name=line_name)
 
     # Vcell=(cellsize*p.mpc_to_m)**3
 
@@ -2316,6 +2315,7 @@ def make_quantity_rectangular_grid(
     line_name="CII158",
     halo_cutoff_mass=1e11,
     freq_obs= '150',
+    dnu_obs = None,
     nproj=None,
     use_scatter=False,
     halocat_type="input_cat",
@@ -2338,7 +2338,8 @@ def make_quantity_rectangular_grid(
     if cellsize_y:
         d_omega_pix = lu.solid_angle(cellsize_y, halo_redshift)
 
-    d_nu = lu.comoving_size_to_delta_nu(cellsize_z, halo_redshift, line_name=line_name, nu_obs= freq_obs)
+    if line_name.lower() != 'cib':
+        dnu_obs = lu.comoving_size_to_delta_nu(cellsize_z, halo_redshift, line_name=line_name, nu_obs= freq_obs)
 
     halomass, halo_cm = lu.make_halocat(
         halocat_file, mmin=halo_cutoff_mass, halocat_type=halocat_type
@@ -2353,7 +2354,7 @@ def make_quantity_rectangular_grid(
         use_scatter=use_scatter,
         line_name=line_name,
         freq_obs= freq_obs,
-        dfreq_obs= d_nu,
+        dfreq_obs= dnu_obs,
         params_fisher=params_fisher,
         zg = zg
     )
@@ -2389,7 +2390,7 @@ def make_quantity_rectangular_grid(
         prefac = 4.0204e-2 * small_h**2  # Lsol/Mpc^2/ GHz
 
         grid_intensity = (
-            prefac * (grid_lum / 4.0 / np.pi / D_lum**2) / d_omega_pix / d_nu
+            prefac * (grid_lum / 4.0 / np.pi / D_lum**2) / d_omega_pix / dnu_obs
         )  # Jy/sr
 
         return grid_intensity
@@ -2417,7 +2418,7 @@ def make_quantity_rectangular_grid_NO_Z_EVO(
     zg = 8.8
 ):
 
-    if (dnu_obs is not None):
+    if (dnu_obs is not None) and line_name.lower() != 'cib':
         zem, dz, dchi, d_ngrid = lu.box_freq_to_quantities(nu_obs=nu_obs,
                                                            dnu_obs=dnu_obs,
                                                            boxsize= boxsize_z,
@@ -2429,7 +2430,7 @@ def make_quantity_rectangular_grid_NO_Z_EVO(
         d_ngrid = d_ngrid if d_ngrid< ngrid_z else ngrid_z
 
     # if dnu_obs is None, then ngrid along z axis will remain unchanged.
-    if (dnu_obs is None):
+    if (dnu_obs is None) or line_name.lower() == 'cib':
         Ngrid_new = ngrid_z
         d_ngrid = ngrid_z
         dz = None
@@ -2444,6 +2445,7 @@ def make_quantity_rectangular_grid_NO_Z_EVO(
                 quantity="intensity",
                 line_name=line_name,
                 freq_obs = nu_obs,
+                dnu_obs = dnu_obs,
                 halo_cutoff_mass= halo_cutoff_mass,
                 use_scatter= use_scatter,
                 halocat_type= halocat_type,
@@ -2482,7 +2484,7 @@ def make_quantity_rectangular_grid_z_evo(
     zg = 8.8
 ):
 
-    if (dnu_obs is not None):
+    if (dnu_obs is not None) and line_name.lower() != 'cib':
         zem, dz, dchi, d_ngrid = lu.box_freq_to_quantities(nu_obs=nu_obs,
                                                            dnu_obs=dnu_obs,
                                                            boxsize= boxsize_z,
@@ -2495,7 +2497,7 @@ def make_quantity_rectangular_grid_z_evo(
         print(f'Redshift bin sizes: {dz}')
 
     # if dnu_obs is None, then ngrid along z axis will remain unchanged.
-    if (dnu_obs is None):
+    if (dnu_obs is None) and line_name.lower() == 'cib':
         Ngrid_new = ngrid_z
         d_ngrid = ngrid_z
         dz = None
@@ -2524,7 +2526,8 @@ def make_quantity_rectangular_grid_z_evo(
         if cellsize_y:
             d_omega_pix = lu.solid_angle(cellsize_y, z_start)
 
-        dnu_obs = lu.comoving_size_to_delta_nu(cellsize_z, z_start, line_name=line_name, nu_obs= nu_obs)
+        if line_name.lower() != 'cib':
+            dnu_obs = lu.comoving_size_to_delta_nu(cellsize_z, z_start, line_name=line_name, nu_obs= nu_obs)
 
 
         #print(i)
@@ -2864,7 +2867,7 @@ def plot_beam_convolution(
     if plot_scale == "log":
         convolved_grid[
             convolved_grid <= 0
-        ] = 1e-20  # Fill zero or negative values with a very small number so that log(0) does not exist.
+        ] = 1e-40  # Fill zero or negative values with a very small number so that log(0) does not exist.
         res = ax.imshow(
             np.log10(convolved_grid),
             cmap=cmap,

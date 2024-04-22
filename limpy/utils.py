@@ -372,12 +372,12 @@ def nu_obs_to_z(nu_obs, line_name="CII158"):
 
 
 def comoving_size_to_delta_nu(length, z, line_name="CII158", nu_obs= None):
-    if line_name.lower() == 'cib':
-        if nu_obs is None:
-            raise ValueError("If you want CIB, must give observed frequency")
-        nu_rest = nu_obs * (1 + z)
-    else:
-        nu_rest = p.nu_rest(line_name=line_name)
+    # if line_name.lower() == 'cib':
+    #     if nu_obs is None:
+    #         raise ValueError("If you want CIB, must give observed frequency")
+    #     nu_rest = nu_obs * (1 + z)
+    # else:
+    #     nu_rest = p.nu_rest(line_name=line_name)
 
     dchi_dz = p.c_in_mpc / p.cosmo.H_z(z)
 
@@ -417,23 +417,35 @@ def box_freq_to_quantities(
     nu_obs=280, dnu_obs=2.8, boxsize=80, ngrid=512, z_start=None, line_name="CII158"
 ):
 
-    if line_name.lower() == 'cib':
-        nu_rest = nu_obs * (1 + z_start)
-    else:
+    #For LIM: Slice up the Box
+    if line_name.lower() != 'cib':
         nu_rest = p.nu_rest(line_name=line_name)
 
-    cell_size = boxsize / ngrid
+        cell_size = boxsize / ngrid
 
-    if z_start:
-        z_em = z_start
+        if z_start:
+            z_em = z_start
+        else:
+            z_em = (nu_rest / nu_obs) - 1
+
+        dz_em = nu_rest * dnu_obs / (nu_obs * (nu_obs + dnu_obs))
+        d_chi = p.cosmo.D_co(z_em + dz_em) - p.cosmo.D_co(z_em)
+        d_ngrid = int(d_chi / cell_size)
+
+        z_em = round(z_em, 2)
+        dz_em = round(dz_em, 2)
+
+    #For CIB: Take the Whole Box
     else:
-        z_em = (nu_rest / nu_obs) - 1
+        #Redshift info is determined by your snapshots
+        z_em = None
+        dz_em = None
 
-    dz_em = nu_rest * dnu_obs / (nu_obs * (nu_obs + dnu_obs))
-    d_chi = p.cosmo.D_co(z_em + dz_em) - p.cosmo.D_co(z_em)
-    d_ngrid = int(d_chi / cell_size)
+        #Comoving box isn't sliced up
+        d_chi = None
+        d_ngrid = None
 
-    return round(z_em, 2), round(dz_em, 2), d_chi, d_ngrid
+    return z_em, dz_em, d_chi, d_ngrid
 
 
 def get_lines_same_frequency(line_list, nu_obs=220, dnu_obs=40, zlim=15):
@@ -668,7 +680,7 @@ def make_hlist_ascii_to_npz(hlist_path_ascii, filename=None):
     return
 
 
-def make_halocat(halo_file, halocat_type="input_cat", mmin=None, boxsize=None):
+def make_halocat(halo_file, halocat_type="input_cat", mmin=None, boxsize=None, Nhalos= None):
     """
     reads the mass and co-ordinates of halos from a npz file.
 
@@ -681,11 +693,11 @@ def make_halocat(halo_file, halocat_type="input_cat", mmin=None, boxsize=None):
 
     if halocat_type == "input_cat":
         fn = np.load(halo_file)
-        if mmin == None:
+        if mmin == None and Nhalos == None:
             # halomass and x,y,z are read in the following format
             halomass, halo_x, halo_y, halo_z = fn["m"], fn["x"], fn["y"], fn["z"]
 
-        else:
+        if mmin != None:
             halomass, halo_x, halo_y, halo_z = fn["m"], fn["x"], fn["y"], fn["z"]
             mass_cut = halomass >= mmin
             halomass = halomass[mass_cut]
@@ -693,11 +705,21 @@ def make_halocat(halo_file, halocat_type="input_cat", mmin=None, boxsize=None):
             halo_y = halo_y[mass_cut]
             halo_z = halo_z[mass_cut]
 
-            ind_sort = np.argsort(halomass)
-            halomass = halomass[ind_sort]
-            halo_x = halo_x[ind_sort]
-            halo_y = halo_y[ind_sort]
-            halo_z = halo_z[ind_sort]
+        if Nhalos != None: 
+            assert isinstance(Nhalos, int), "Nhalos must be an integer"
+
+            halomass, halo_x, halo_y, halo_z = fn["m"], fn["x"], fn["y"], fn["z"]
+            halomass = halomass[:Nhalos]
+            halo_x = halo_x[:Nhalos]
+            halo_y = halo_y[:Nhalos]
+            halo_z = halo_z[:Nhalos]
+
+        #Sort By Mass
+        ind_sort = np.argsort(halomass)
+        halomass = halomass[ind_sort]
+        halo_x = halo_x[ind_sort]
+        halo_y = halo_y[ind_sort]
+        halo_z = halo_z[ind_sort]
 
     halo_cm = np.array([halo_x, halo_y, halo_z]).T
 
