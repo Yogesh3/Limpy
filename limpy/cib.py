@@ -273,8 +273,11 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True):
     L_o =params['L_o']
 
     #Calculate the z and M Dependence
-    Lz = capitalPhi(z, d) * capitalTheta(nu, nuframe, z, a, b, g, Td_o)
     Lm = capitalSigma(M, logM_eff, var)
+    if halocat:
+        Lz = capitalPhi(z[:1], d) * capitalTheta(nu, nuframe, z[:1], a, b, g, Td_o)
+    else:
+        Lz = capitalPhi(z, d) * capitalTheta(nu, nuframe, z, a, b, g, Td_o)
     
     #Put Luminosity on Grid
     if not halocat:

@@ -373,11 +373,12 @@ def nu_obs_to_z(nu_obs, line_name="CII158"):
 
 def comoving_size_to_delta_nu(length, z, line_name="CII158", nu_obs= None):
     # if line_name.lower() == 'cib':
-    #     if nu_obs is None:
-    #         raise ValueError("If you want CIB, must give observed frequency")
-    #     nu_rest = nu_obs * (1 + z)
+        # if nu_obs is None:
+        #     raise ValueError("If you want CIB, must give observed frequency")
+        # nu_rest = nu_obs * (1 + z)
     # else:
     #     nu_rest = p.nu_rest(line_name=line_name)
+    nu_rest = p.nu_rest(line_name=line_name)
 
     dchi_dz = p.c_in_mpc / p.cosmo.H_z(z)
 

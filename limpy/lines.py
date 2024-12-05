@@ -1753,7 +1753,8 @@ def mhalo_to_lline(
             cib_params['Td_o'] = 24.4
             cib_params['logM_eff'] = 12.6
             cib_params['var'] = 0.5
-            cib_params['L_o'] = 6.4e-8      # Jy * Mpc^2 / M_sun / Hz
+            # cib_params['L_o'] = 6.4e-8      # Jy * Mpc^2 / M_sun / Hz
+            cib_params['L_o'] = 1.59e-15       # L_sol / M_sol / Hz
         elif cib_param_dataset.lower() == 'viero':      # Viero et al
             cib_params['alpha'] = 0.2
             cib_params['beta'] = 1.6
@@ -1762,7 +1763,8 @@ def mhalo_to_lline(
             cib_params['Td_o'] = 20.7
             cib_params['logM_eff'] = 12.3
             cib_params['var'] = 0.3
-            cib_params['L_o'] = 6.4e-8
+            # cib_params['L_o'] = 6.4e-8      # Jy * Mpc^2 / M_sun / Hz
+            cib_params['L_o'] = 1.59e-15       # L_sol / M_sol / Hz
 
         #Get Bandpass
         if dfreq_obs is not None:
@@ -1771,6 +1773,7 @@ def mhalo_to_lline(
             # zs = np.linspace(z-dz, z+dz)
         else:
             bandpass = [freq_obs]
+        bandpass = np.array(bandpass) * 1e9  # convert from GHz to Hz
 
         #Get Luminosity
         zs = np.ones(len(Mhalo)) * z
