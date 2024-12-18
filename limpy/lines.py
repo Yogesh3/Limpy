@@ -2445,7 +2445,7 @@ def make_quantity_rectangular_grid_NO_Z_EVO(
                 dz= dz,
                 sfr_model= sfr_model,
                 model_name= model_name,
-                quantity="intensity",
+                quantity= quantity,
                 line_name=line_name,
                 freq_obs = nu_obs,
                 dnu_obs = dnu_obs,
