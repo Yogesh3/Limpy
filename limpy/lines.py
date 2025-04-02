@@ -1630,7 +1630,7 @@ def mhalo_to_lco_fit(
 ):
 
     if model_name == "Visbal10":
-        L_line = L_line_Visbal10(Mhalo, z, f_duty=f_duty, line_name=line_name)
+        L_line = L_line_Visbal10(Mhalo, z, f_duty=f_duty, line_name=line_name, sfr_model= sfr_model)
 
     if model_name == "Padmanabhan18":
         L_line = LCO_Padmanabhan18(Mhalo, z, line_name=line_name)
