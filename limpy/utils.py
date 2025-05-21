@@ -266,7 +266,7 @@ def Omega_beam(theta_beam, beam_unit="arcmin"):
     
     Returns
     -------
-    the standard deviation of the beam.
+    The solid angle of the beam, assuming a 2D gaussian.
     """
     
     theta_rad = convert_beam_unit_to_radian(theta_beam, beam_unit=beam_unit)
