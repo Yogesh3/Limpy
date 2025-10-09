@@ -8,7 +8,7 @@ Created on Tue Jun  9 11:57:35 2020
 import imp
 
 import numpy as np
-from scipy.integrate import simps
+from scipy.integrate import simpson as simps
 
 import limpy.cosmos as cosmos
 import limpy.params as p
