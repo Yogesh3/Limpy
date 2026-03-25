@@ -222,9 +222,35 @@ def capitalTheta(nu_sample, nuframe, z, alpha, beta, gamma, T_o, plot=False):
 
     return sed
 
-def capitalPhi(z, delta):
-    """ Redshift dependent global normalization """
-    return (1+z)**delta
+
+
+def capitalPhi(z, delta, plateauFlag= False):
+    """
+    Redshift-dependent global luminosity normalization. Two models are implemented: where the luminosity monotonically increases with redshift and where the luminosity plateaus at a specific redshift.
+
+    Parameters
+    ----------
+    z : array
+        Array of all of the relevant redshifts.
+    delta : float
+        Power law exponent.
+    plateauFlag : boolean
+        Whether or not the model in which the luminosity-dependence plateaus above a max redshift should be utilized. If not, then the monotonically increasing model is used instead.
+
+    Returns
+    -------
+    array
+        Array of the contribution of redshift on luminosity.
+    """
+
+    z_p = 2
+
+    if plateauFlag:
+        return np.where( z > z_p, (1+2)**delta, (1+z)**delta )
+    else:
+        return (1+z)**delta
+
+
 
 def capitalSigma(M, logM_eff, sigma2):
     """Halo mass dependance of galaxy luminosity 
@@ -236,7 +262,9 @@ def capitalSigma(M, logM_eff, sigma2):
 
     return M/np.sqrt(2*np.pi*sigma2) * np.exp(- (np.log10(M)-logM_eff)**2 / (2*sigma2))
 
-def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True):  
+
+
+def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True, plateauFlag= False):  
     """Luminosity of CIB galaxies. It depends only on mass and redshift. The fit parameters are in the "params" dictionary. The luminosity is either broadcasted onto a grid of [z, M, k/r] or is returned soley for the redshifts and masses provided (the diagonal of the [z, M] grid).
 
     Arguments:
@@ -246,6 +274,7 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True):
         nu [1darray]: either single frequency or the endpoints of a bandpass
         nuframe [str:'obs'|'rest']: frame that the nu is given in
         halocat [bool]: If True, returns the luminosity for each redshift-halo mass pair provided (so len(z) = len(M)). If False, returns the lumnosity on the full 3D grid. 
+        plateauFlag [bool]: If True, uses "plateau" model for z-dependence. If False, uses "monotonic" model instead (see capitalPhi() for more info).
     
     Model parameters:
         alpha [float]: fit parameter - alpha 
@@ -274,7 +303,7 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True):
 
     #Calculate the z and M Dependence
     Lm = capitalSigma(M, logM_eff, var)
-    Lz = capitalPhi(z, d) * capitalTheta(nu, nuframe, z, a, b, g, Td_o)
+    Lz = capitalPhi(z, d, plateauFlag) * capitalTheta(nu, nuframe, z, a, b, g, Td_o)
     # if halocat:
     #     Lz = capitalPhi(z[:1], d) * capitalTheta(nu, nuframe, z[:1], a, b, g, Td_o)
     # else:
@@ -293,6 +322,8 @@ def luminosity(z, M, Nks, nu, params, nuframe='obs', halocat= True):
         L = Lz * Lm
 
     return L_o * L
+
+
 
 if __name__ == "__main__":
     #Testing
