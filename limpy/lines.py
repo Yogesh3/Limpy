@@ -1740,8 +1740,8 @@ def mhalo_to_lline(
 
 
     elif line_name.lower() == 'cib':
-        if model_name.lower() != 'shang':
-            raise NotImplementedError("Only have the Shang et al. model implemented")
+        if model_name.lower() not in ['shang', 'plateau']:
+            raise NotImplementedError("Only have the Shang et al. model (with or without plateau) implemented")
 
         #Add Parameters
         cib_params = {}
@@ -1775,6 +1775,11 @@ def mhalo_to_lline(
             bandpass = [freq_obs]
         bandpass = np.array(bandpass) * 1e9  # convert from GHz to Hz
 
+        #Determine Which Model
+        if model_name.lower() == 'shang':
+            plateau = False
+        elif model_name.lower() == 'plateau':
+            plateau = True
         #Get Luminosity
         zs = np.ones(len(Mhalo)) * z
         L_line = cib.luminosity(
@@ -1783,7 +1788,8 @@ def mhalo_to_lline(
                                 1, 
                                 bandpass, 
                                 cib_params,
-                                halocat= True
+                                halocat= True,
+                                plateauFlag= plateau      
                                 )
 
         #Debugging

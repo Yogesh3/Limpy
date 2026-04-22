@@ -1,7 +1,7 @@
 import numpy as np
 # from matplotlib import pyplot as plt
 # from matplotlib import colors as c
-
+import os
 import astropy.constants as const
 # from astropy import units as u
 from scipy.optimize import fsolve
@@ -77,14 +77,31 @@ def capitalTheta(nu_sample, nuframe, z, alpha, beta, gamma, T_o, plot=False):
             freq_array = np.ones(z.shape) * nu_sample
     else:
         raise ValueError('Need a valid reference frame to view the SEDs in.')
-    temp_array = T_o * (1+z)**alpha
+
     
-    #Get nu_o and proportionality constant A
-    nu_o_guess = np.ones(temp_array.shape, dtype=np.float64) * 5.0e12   #initial guess
-    A_guess = np.ones(temp_array.shape, dtype=np.float64) * 1.0e32      #initial guess
-    sol = fsolve(sysEquations, np.concatenate((nu_o_guess, A_guess)), args=(temp_array, beta, gamma))
-    nu_o_array = sol[:temp_array.size]
-    A_array = sol[temp_array.size:]
+    #Prepare for SED Parameter Determination
+    table = np.load( os.path.dirname(os.path.abspath(__file__)) + '/data/cib_lookup_table.npz' )
+    z_max = np.max( table['z'] )
+    temp_array = T_o * (1+z)**alpha
+    nu_o_array = np.empty(temp_array.shape)
+    A_array = np.empty(temp_array.shape)
+
+    #Calculate nu_o and proportionality constant A
+    if len( z[ z>z_max ] ): 
+        temp_array_highz = T_o * (1+z[z>z_max])**alpha
+
+        nu_o_guess = np.ones(temp_array_highz.shape, dtype=np.float64) * 5.0e12   #initial guess
+        A_guess = np.ones(temp_array_highz.shape, dtype=np.float64) * 1.0e32      #initial guess
+        sol = fsolve(sysEquations, np.concatenate((nu_o_guess, A_guess)), args=(temp_array_highz, beta, gamma))
+
+        nu_o_array[ z>z_max ] = sol[:temp_array_highz.size]
+        A_array[ z>z_max ] = sol[temp_array_highz.size:]
+    
+    #Use Lookup Table
+    if len( z[ z<=z_max ] ): 
+        nu_o_array[ z<=z_max ] = np.interp( z[z<=z_max], table['z'], table['nu_o'].flatten() )
+        A_array[ z<=z_max ] =  np.interp( z[z<=z_max], table['z'], table['A'].flatten() )
+
 
     #Range of Frequencies
     if bandpassflag:      
@@ -331,15 +348,15 @@ if __name__ == "__main__":
     # nurange = 3.0e8 / lamdarange
     # nurange = np.array([545.])*1e9
     
-    #Setup Grid
-    Nz = 100                                 # num of redshifts
-    Nm = 500                                 # num of masses
-    Nk = 1000                                # num of wavenumbers
-    redshifts = np.linspace(0.01, 6, Nz)             
-    masses = np.geomspace(1.0e10, 1.0e16, Nm)          
-    ks = np.geomspace(1.0e-3, 100.0, Nk)              # wavenumbers
+    # #Setup Grid
+    # Nz = 100                                 # num of redshifts
+    # Nm = 500                                 # num of masses
+    # Nk = 1000                                # num of wavenumbers
+    # redshifts = np.linspace(0.01, 6, Nz)             
+    # masses = np.geomspace(1.0e10, 1.0e16, Nm)          
+    # ks = np.geomspace(1.0e-3, 100.0, Nk)              # wavenumbers
     
-    cib_params = {}
+    # cib_params = {}
     cib_params['alpha'] = 0.36
     cib_params['beta'] = 1.75
     cib_params['gamma'] = 1.7
@@ -347,12 +364,23 @@ if __name__ == "__main__":
     cib_params['Td_o'] = 24.4
     cib_params['logM_eff'] = 12.6
     cib_params['var'] = 0.5
-    cib_params['L_o'] = 6.4e-8
-    
-    # redshifts = np.array([2.0])
-    # sed = capitalTheta(nurange, 'obs', redshifts, alpha=0.36, beta=1.75, gamma=1.7, T_o=24.4, plot=True)
-    # print(sed)
+    # cib_params['L_o'] = 6.4e-8      # Jy * Mpc^2 / M_sun / Hz
+    cib_params['L_o'] = 1.59e-15       # L_sol / M_sol / Hz
 
-    L = luminosity(redshifts, masses, Nk, [545e9], cib_params)
-    np.save('lum545', L)
     
+    # # redshifts = np.array([2.0])
+    # # sed = capitalTheta(nurange, 'obs', redshifts, alpha=0.36, beta=1.75, gamma=1.7, T_o=24.4, plot=True)
+    # # print(sed)
+
+    # L = luminosity(redshifts, masses, Nk, [545e9], cib_params)
+    # np.save('lum545', L)
+    
+    #Plank13 Params
+    z = np.linspace(0,10, 1e4)
+    temp_array = T_o * (1+z)**alpha
+
+    nu_o_guess = np.ones(temp_array.shape, dtype=np.float64) * 5.0e12   #initial guess
+    A_guess = np.ones(temp_array.shape, dtype=np.float64) * 1.0e32      #initial guess
+    sol = fsolve(sysEquations, np.concatenate((nu_o_guess, A_guess)), args=(temp_array, beta, gamma))
+    nu_o_array = sol[:temp_array.size]
+    A_array = sol[temp_array.size:]
