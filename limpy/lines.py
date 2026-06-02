@@ -1527,14 +1527,23 @@ def mhalo_to_sfr(Mhalo, z, sfr_model="Behroozi19"):
 
     if sfr_model == "Behroozi19":
         # sfr_interpolation=RectBivariateSpline(mhn, zn, sfrn)
-        sfr = sfr_interpolation_Behroozi19(np.log10(Mhalo), z)
+        try:
+            sfr = sfr_interpolation_Behroozi19(np.log10(Mhalo), z)
+        except:
+            sfr = sfr_interpolation_Behroozi19(np.log10(Mhalo), z, grid= False)
 
     if sfr_model == "Tng100":
 
-        sfr = sfr_interpolation_tng100(np.log10(Mhalo), z)
+        try:
+            sfr = sfr_interpolation_tng100(np.log10(Mhalo), z)
+        except:
+            sfr = sfr_interpolation_tng100(np.log10(Mhalo), z, grid= False)
 
     if sfr_model == "Tng300":
-        sfr = sfr_interpolation_tng300(np.log10(Mhalo), z)
+        try:
+            sfr = sfr_interpolation_tng300(np.log10(Mhalo), z)
+        except:
+            sfr = sfr_interpolation_tng300(np.log10(Mhalo), z, grid= False)
 
     res = np.where(sfr < 1e-4, p.lcp_low, sfr)
     return res.flatten()
