@@ -228,7 +228,8 @@ def get_pk3d(
     power /= cofactor
 
     if kbins is None:
-        k_F = 2 * np.pi / pow(Vbox, 1 / 3)  # 2 * np.pi /np.max([Lx, Ly])
+        # k_F = 2 * np.pi / pow(Vbox, 1 / 3)  # 2 * np.pi /np.max([Lx, Ly])
+        k_F = 2 * np.pi / np.max([Lx, Ly, Lz])
         k_N = np.pi * Nx / Lx
         delta_k = 2 * k_F
         #delta_k = k_F
