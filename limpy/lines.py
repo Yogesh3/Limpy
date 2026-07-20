@@ -1529,20 +1529,20 @@ def mhalo_to_sfr(Mhalo, z, sfr_model="Behroozi19"):
         # sfr_interpolation=RectBivariateSpline(mhn, zn, sfrn)
         try:
             sfr = sfr_interpolation_Behroozi19(np.log10(Mhalo), z)
-        except:
+        except ValueError:
             sfr = sfr_interpolation_Behroozi19(np.log10(Mhalo), z, grid= False)
 
     if sfr_model == "Tng100":
 
         try:
             sfr = sfr_interpolation_tng100(np.log10(Mhalo), z)
-        except:
+        except ValueError:
             sfr = sfr_interpolation_tng100(np.log10(Mhalo), z, grid= False)
 
     if sfr_model == "Tng300":
         try:
             sfr = sfr_interpolation_tng300(np.log10(Mhalo), z)
-        except:
+        except ValueError:
             sfr = sfr_interpolation_tng300(np.log10(Mhalo), z, grid= False)
 
     res = np.where(sfr < 1e-4, p.lcp_low, sfr)
